@@ -29,10 +29,11 @@ First, you need to pair your flipper with your computer. Tihs process varies, bu
 bluetoothctl
 agent on
 pair youf_flipper_mac_address
+disconnect youf_flipper_mac_address
 ```
 
 This should ask you for a confirmation code and pair your device.
-After that, disconnect your Flipper from your computer.
+After that, ensure that your Flipper is disconnected from your computer.
 
 Then, you can run
 
