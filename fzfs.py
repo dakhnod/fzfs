@@ -10,13 +10,27 @@ import logging
 import time
 import threading
 import stat
+import os
 
 def main():
-    print('starting')
+    if len(sys.argv) != 3:
+        print('usage: python fzfs.py serial-device mountpoint')
+        print('example: python fzfs.py /dev/ttyACM0 /home/user/flipper-zero')
+        return
+
+    mountpoint = sys.argv[2]
+
+    if not os.path.isdir(mountpoint):
+        print('mountpoint must be an empty folder')
+        return
+
+    if len(os.listdir(mountpoint)) != 0:
+        print('mountpoint must be an empty folder')
+        return
+
     try:
         fs = fuse.FUSE(FlipperZeroFileSysten(sys.argv[1]), sys.argv[2], foreground=True)
     except:
-        print('stopping')
         fuse.fuse_exit()
 
 
