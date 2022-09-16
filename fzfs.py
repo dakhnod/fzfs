@@ -1,24 +1,35 @@
+from ast import parse
+from audioop import add
 import errno
+from fileinput import filename
 from os import unlink
+import pathlib
+from signal import signal
 from stat import S_IFDIR, ST_ATIME, ST_CTIME, ST_MODE, ST_MTIME, ST_NLINK
+from turtle import back
 
-from numpy import delete, full
 import flipper_api
-import sys
 import fuse
 import logging
 import time
-import threading
 import stat
 import os
+import argparse
+import pathlib
+import serial
+import serial_ble
+import sys
 
 def main():
-    if len(sys.argv) != 3:
-        print('usage: python fzfs.py serial-device mountpoint')
-        print('example: python fzfs.py /dev/ttyACM0 /home/user/flipper-zero')
-        return
+    parser = argparse.ArgumentParser(description='FUSE driver for flipper serial connection')
+    parser.add_argument('-d', '--device', help='Serial device to connect to', dest='serial_device')
+    parser.add_argument('-a', '--address', help='Flipper BLE address', dest='ble_address')
+    parser.add_argument('-m', '--mount', help='Mount point to mount the FZ to', dest='mountpoint', required=True)
+    args = parser.parse_args()
 
-    mountpoint = sys.argv[2]
+    logging.basicConfig(level=logging.DEBUG)
+
+    mountpoint = args.mountpoint
 
     if not os.path.isdir(mountpoint):
         print('mountpoint must be an empty folder')
@@ -28,10 +39,74 @@ def main():
         print('mountpoint must be an empty folder')
         return
 
+
+    if args.serial_device is None and args.ble_address is None:
+        print('either serial_device or ble_address required')
+        return
+
+    if args.serial_device is not None and args.ble_address is not None:
+        print('only one of serial_device/ble_address required')
+        return
+
+    serial_device = None
+
+    def create_serial_device():
+        if args.serial_device is not None:
+            if not os.path.exists(args.serial_device):
+                print('serial device not an actual file')
+                parser.print_usage()
+                exit()
+
+            return create_physical_serial(args.serial_device, True)
+        if args.ble_address is not None:
+            def disconnect_handler(client):
+                print('disconnected')
+                sys.exit(0)
+
+            return create_ble_serial(args.ble_address, None)
+
+    serial_device = create_serial_device()
+
+    if serial_device is None:
+        print('failed creating serial device')
+
+    backend = FlipperZeroFileSysten(serial_device)
+
+    fuse_started = True
+    # fuse_thread = threading.Thread(target=fuse.FUSE, kwargs={'operations': backend, 'mountpoint': mountpoint, 'foreground': True})
+    def fuse_start():
+        fuse.FUSE(backend, mountpoint, foreground=True)
+
+    print('starting fs...')
+    fuse_start()
+    print('fuse stopped')
+
     try:
-        fs = fuse.FUSE(FlipperZeroFileSysten(sys.argv[1]), sys.argv[2], foreground=True)
-    except:
-        fuse.fuse_exit()
+        serial_device.stop()
+        print('stopped bluetooth')
+    except AttributeError:
+        pass
+
+
+def create_physical_serial(file, is_cli):
+    s = serial.Serial(file, timeout=1)
+    s.baudrate = 230400
+    s.flushOutput()
+    s.flushInput()
+    if is_cli:
+        s.read_until(b'>: ')
+        s.write(b"start_rpc_session\r")
+        s.read_until(b'\n')
+    return s
+
+def create_ble_serial(address, disconnected_handler):
+    s = serial_ble.BLESerial(address, '19ed82ae-ed21-4c9d-4145-228e61fe0000', '19ed82ae-ed21-4c9d-4145-228e62fe0000')
+    print('connecting...')
+    s.start(disconnected_handler)
+    print('connected')
+
+    return s
+    
 
 
 class FlipperZeroFileSysten(fuse.Operations, fuse.LoggingMixIn):
@@ -92,7 +167,6 @@ class FlipperZeroFileSysten(fuse.Operations, fuse.LoggingMixIn):
         return ['.', '..'] + [child['name'] for child in parent['children']]
 
     def getattr(self, path, fh=None):
-        # print(f'getattr {path}')
         file = self.get_file_by_path(path)
 
         try:
@@ -145,7 +219,7 @@ class FlipperZeroFileSysten(fuse.Operations, fuse.LoggingMixIn):
         return bytes(data[offset:offset + size])
 
     def write(self, path, data, offset, fh):
-        print(f'write file: {path} offset: {offset} length: {len(data)} type: {type(data)}')
+        print(f'write file: {path} offset: {offset} length: {len(data)}')
         try:
             cached = self.get_file_by_path(path)
         except OSError:
@@ -156,6 +230,12 @@ class FlipperZeroFileSysten(fuse.Operations, fuse.LoggingMixIn):
         cached['attr']['st_size'] = len(cached['contents'])
         self.api.write(path, bytes(cached['contents']))
         return len(data)
+
+    
+    def open(self, path, flags):
+        print(f'open {path} {flags}')
+        self.fd += 1
+        return self.fd
 
 
     def get_filename_from_path(self, path):
@@ -169,7 +249,6 @@ class FlipperZeroFileSysten(fuse.Operations, fuse.LoggingMixIn):
         parent_path = self.get_parent_from_path(child_path)
         parent = self.get_file_by_path(parent_path)
         child['parent'] = parent
-        print(f'appending to {parent_path}')
         parent['children'].append(child)
 
     def mkdir(self, path, mode):

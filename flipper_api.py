@@ -14,31 +14,15 @@ from flipperzero_protobuf_py.cli_helpers import *
 
 
 class FlipperAPI():
-    def __init__(self, serial_port) -> None:
-        self.serial_port = serial_port
+    def __init__(self, flipper_serial) -> None:
+        self.serial_port = flipper_serial
         self.proto = None
-        self.flipper = None
+        self.flipper = flipper_serial
         self.mutex=threading.Lock()
 
 
     def connect(self):
         with self.mutex:
-            self.flipper = serial.Serial(self.serial_port, timeout=1)
-            self.flipper.baudrate = 230400
-            self.flipper.flushOutput()
-            self.flipper.flushInput()
-
-            # disable timeout
-            self.flipper.timeout = None
-
-            # wait for prompt
-            self.flipper.read_until(b'>: ')
-
-            # send command and skip answer
-            self.flipper.write(b"start_rpc_session\r")
-            self.flipper.read_until(b'\n')
-
-            # construct protobuf worker
             self.proto = ProtoFlipper(self.flipper)
 
             print("Ping result: ")

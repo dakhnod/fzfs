@@ -9,18 +9,36 @@ git clone --recursive git@github.com:dakhnod/fzfs.git
 cd fzfs
 python3 -m venv venv
 . venv/bin/activate
-pip install protobuf fusepy pyserial numpy
+pip install -r requirements.txt
 ```
 
-## Usage
+## Connect via USB Serial
 
 The script takes two arguments, the serial port and the mount point
 
 ```
-venv/bin/python3 fzfs.py /dev/ttyACM0 /home/user/flipper-zero
+venv/bin/python3 fzfs.py -d /dev/ttyACM0 -m /home/user/flipper-zero
 ```
 
 Then you should be able to access your flipper files through file browser of the console in the mountpoint.
+
+## Connect via BLE Serial
+
+First, you need to pair your flipper with your computer. Tihs process varies, but a good starting point is:
+```
+bluetoothctl
+agent on
+pair youf_flipper_mac_address
+```
+
+This should ask you for a confirmation code and pair your device.
+After that, disconnect your Flipper from your computer.
+
+Then, you can run
+
+```
+venv/bin/python3 fzfs.py -a "youf_flipper_mac_address" -m /home/user/flipper-zero
+```
 
 ## Disclaimer
 
