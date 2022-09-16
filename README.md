@@ -5,9 +5,8 @@ This driver allows you to mount the flipper zero over its serial connection and 
 ## Installation
 
 ```
-git clone git@github.com:dakhnod/fzfs.git
+git clone --recursive --depth 1git@github.com:dakhnod/fzfs.git
 cd fzfs
-git clone git@github.com:flipperdevices/flipperzero_protobuf_py.git
 python3 -m venv venv
 . venv/bin/activate
 pip install protobuf
