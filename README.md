@@ -28,8 +28,8 @@ First, you need to pair your flipper with your computer. Tihs process varies, bu
 ```
 bluetoothctl
 agent on
-pair youf_flipper_mac_address
-disconnect youf_flipper_mac_address
+pair your_flipper_mac_address
+disconnect your_flipper_mac_address
 ```
 
 This should ask you for a confirmation code and pair your device.
@@ -38,7 +38,7 @@ After that, ensure that your Flipper is disconnected from your computer.
 Then, you can run
 
 ```
-venv/bin/python3 fzfs.py -a "youf_flipper_mac_address" -m /home/user/flipper-zero
+venv/bin/python3 fzfs.py -a "your_flipper_mac_address" -m /home/user/flipper-zero
 ```
 
 ## Disclaimer
