@@ -1,27 +1,16 @@
-from ast import parse
-from audioop import add
-import errno
-from fileinput import filename
-from os import unlink
-import pathlib
-from signal import signal
-from stat import S_IFDIR, ST_ATIME, ST_CTIME, ST_MODE, ST_MTIME, ST_NLINK
-from turtle import back
 
-import flipper_api
-import fuse
-import logging
-import time
-import stat
-import os
+# pylint: disable=missing-class-docstring
+# pylint: disable=missing-function-docstring
+# pylint: disable=missing-module-docstring
+# pylint: disable=line-too-long
+
 import argparse
-import pathlib
-import serial
-import serial_ble
-import serial.tools.list_ports
-import sys
+import logging
+import os
 
+import fuse
 
+import flipper_fs
 import flipper_serial
 
 def main():
@@ -33,15 +22,10 @@ def main():
 
     logging.basicConfig(level=logging.DEBUG)
 
-    mountpoint = args.mountpoint
-
-    if not os.path.isdir(mountpoint):
-        print('mountpoint must be an empty folder')
-        return
     flsrl = flipper_serial.FlipperSerial()
 
-    if len(os.listdir(mountpoint)) != 0:
-        print('mountpoint must be an empty folder')
+    if not os.path.isdir(args.mountpoint) and len(os.listdir(args.mountpoint)) != 0:
+        print(args.mountpoint, ': mountpoint must be an empty folder')
         return
 
     if args.serial_device is None:
@@ -60,13 +44,15 @@ def main():
         parser.print_usage()
         return
 
-    fuse_started = True
-    # fuse_thread = threading.Thread(target=fuse.FUSE, kwargs={'operations': backend, 'mountpoint': mountpoint, 'foreground': True})
-    def fuse_start():
-        fuse.FUSE(backend, mountpoint, foreground=True)
+    try:
+        serial_device = flsrl.open(serial_device=args.serial_device, ble_address=args.ble_address)
+    except flipper_serial.FlipperSerialException:
+        print('Failed creating serial device')
+        return
 
     print('starting fs...')
-    fuse_start()
+    backend = flipper_fs.FlipperZeroFileSystem(serial_device)
+    fuse.FUSE(backend, args.mountpoint, foreground=True)
     print('fuse stopped')
 
     flsrl.close()
