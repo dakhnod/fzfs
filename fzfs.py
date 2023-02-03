@@ -18,7 +18,18 @@ import argparse
 import pathlib
 import serial
 import serial_ble
+import serial.tools.list_ports
 import sys
+
+flipperusbid = "USB VID:PID=0483:5740"
+
+def autodiscover():
+    ports = serial.tools.list_ports.comports()
+    for check_port in ports:
+        if flipperusbid in check_port.hwid:
+            print("Found: ", check_port.description, "(",check_port.device,")")
+            return check_port.device
+    return None
 
 def main():
     parser = argparse.ArgumentParser(description='FUSE driver for flipper serial connection')
@@ -39,6 +50,8 @@ def main():
         print('mountpoint must be an empty folder')
         return
 
+    if args.serial_device is None:
+        args.serial_device = autodiscover()
 
     if args.serial_device is None and args.ble_address is None:
         print('either serial_device or ble_address required')
