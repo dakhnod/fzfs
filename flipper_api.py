@@ -1,14 +1,12 @@
 #!/usr/bin/env python3
+# pylint: disable=protected-access
+# pylint: disable=no-member
+# pylint: disable=missing-class-docstring
+# pylint: disable=missing-function-docstring
 
-from decimal import InvalidContext
-import sys
-from tracemalloc import start
-from urllib import response
-from flipperzero_protobuf_py.flipperzero_protobuf_compiled import application_pb2, flipper_pb2, storage_pb2
-import serial
-import time
 import threading
 
+from flipperzero_protobuf_py.flipperzero_protobuf_compiled import flipper_pb2, storage_pb2
 from flipperzero_protobuf_py.flipper_protobuf import ProtoFlipper
 from flipperzero_protobuf_py.cli_helpers import *
 
@@ -20,14 +18,12 @@ class FlipperAPI():
         self.flipper = flipper_serial
         self.mutex=threading.Lock()
 
-
     def connect(self):
         with self.mutex:
             self.proto = ProtoFlipper(self.flipper)
 
             print("Ping result: ")
             print_hex(self.proto.cmd_system_ping())
-
 
 
     def _cmd_storage_list_directory(self, path):
@@ -78,7 +74,7 @@ class FlipperAPI():
             raise InvalidNameError()
 
 
-    def list_directory(self, path, additional_data = {}):
+    def list_directory(self, path, additional_data):
         with self.mutex:
             self._cmd_storage_list_directory(path)
 
@@ -120,8 +116,7 @@ class FlipperAPI():
                 self.check_response_status(packet)
                 contents.extend(packet.storage_read_response.file.data)
                 if not packet.has_next:
-                    break            
-
+                    break
             return {'data': contents}
 
     def mkdir(self, path):
