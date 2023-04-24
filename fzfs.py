@@ -55,6 +55,7 @@ def main():
     fuse.FUSE(backend, args.mountpoint, foreground=True)
     print('fuse stopped')
 
+    backend.close()
     flsrl.close()
 
 if __name__ == '__main__':

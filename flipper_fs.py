@@ -189,3 +189,6 @@ class FlipperZeroFileSystem(fuse.Operations, fuse.LoggingMixIn):
         cached = self.get_file_by_path(path)
         self.api.delete(path, True)
         cached['parent']['children'].remove(cached)
+
+    def close(self):
+        self.api.close()
