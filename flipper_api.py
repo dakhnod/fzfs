@@ -143,5 +143,9 @@ class FlipperAPI():
         with self.mutex:
             self._cmd_storage_write(path, data)
 
+    def close(self):
+        with self.mutex:
+            self.proto.cmd_flipper_stop_session()
+
 class InvalidNameError(RuntimeError):
     pass
