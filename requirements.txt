@@ -1,7 +1,0 @@
-async-timeout==4.0.2
-bleak==0.17.0
-dbus-fast==1.4.0
-fusepy==3.0.1
-numpy==1.23.3
-protobuf==4.21.6
-pyserial==3.5

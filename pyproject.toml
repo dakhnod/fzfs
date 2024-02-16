@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "fzfs"
+version = "0.0.1"
+description = "Flipper Zero filesystem driver"
+authors = [
+    {name = "Daniel Dakhno", email = "dakhnod@gmail.com"}
+]
+maintainers = [
+    {name = "Daniel Dakhno", email = "dakhnod@gmail.com"}
+]
+dependencies = [
+    "bleak==0.17.0",
+    "fusepy==3.0.1",
+    "pyserial==3.5",
+    "flipperzero_protobuf @ git+https://github.com/flipperdevices/flipperzero_protobuf_py.git@edd9d0da0d65f3911b66cbf8f899de6e7959d7e1"
+]
+
+[tool.setuptools]
+py-modules = ["fzfs", "flipper_fs", "flipper_api", "flipper_serial", "serial_ble"]
+
+[project.scripts]
+fzfs = "fzfs:main"

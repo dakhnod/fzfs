@@ -6,9 +6,9 @@
 
 import threading
 
-from flipperzero_protobuf_py.flipperzero_protobuf_compiled import flipper_pb2, storage_pb2
-from flipperzero_protobuf_py.flipper_protobuf import ProtoFlipper
-from flipperzero_protobuf_py.cli_helpers import *
+from flipperzero_protobuf.flipperzero_protobuf_compiled import flipper_pb2, storage_pb2
+from flipperzero_protobuf.flipper_proto import FlipperProto
+from flipperzero_protobuf.cli_helpers import print_hex
 
 
 class FlipperAPI():
@@ -20,54 +20,54 @@ class FlipperAPI():
 
     def connect(self):
         with self.mutex:
-            self.proto = ProtoFlipper(self.flipper)
-
+            self.proto = FlipperProto(self.flipper)
+            self.proto._in_session = True
             print("Ping result: ")
-            print_hex(self.proto.cmd_system_ping())
+            print_hex(self.proto.rpc_system_ping())
 
 
     def _cmd_storage_list_directory(self, path):
         cmd_data = storage_pb2.ListRequest()
         cmd_data.path = path
-        self.proto._cmd_send(cmd_data, 'storage_list_request')
+        self.proto._rpc_send(cmd_data, 'storage_list_request')
 
     def _cmd_storage_stat(self, path):
         cmd_data = storage_pb2.StatRequest()
         cmd_data.path = path
-        return self.proto._cmd_send_and_read_answer(cmd_data, 'storage_stat_request')
+        return self.proto._rpc_send_and_read_answer(cmd_data, 'storage_stat_request')
 
     def _cmd_storage_read(self, path):
         cmd_data = storage_pb2.ReadRequest()
         cmd_data.path = path
-        self.proto._cmd_send(cmd_data, 'storage_read_request')
+        self.proto._rpc_send(cmd_data, 'storage_read_request')
 
     def _cmd_storage_mkdir(self, path):
         cmd_data = storage_pb2.MkdirRequest()
         cmd_data.path = path
-        self.proto._cmd_send(cmd_data, 'storage_mkdir_request')
+        self.proto._rpc_send(cmd_data, 'storage_mkdir_request')
 
     def _cmd_storage_rmdir(self, path):
         cmd_data = storage_pb2.RmdirRequest()
         cmd_data.path = path
-        self.proto._cmd_send(cmd_data, 'storage_rmdir_request')
+        self.proto._rpc_send(cmd_data, 'storage_rmdir_request')
 
     def _cmd_storage_rename(self, old_path, new_path):
         cmd_data = storage_pb2.RenameRequest()
         cmd_data.old_path = old_path
         cmd_data.new_path = new_path
-        self.proto._cmd_send(cmd_data, 'storage_rename_request')
+        self.proto._rpc_send(cmd_data, 'storage_rename_request')
 
     def _cmd_storage_delete(self, path, recursive):
         cmd_data = storage_pb2.DeleteRequest()
         cmd_data.path = path
         cmd_data.recursive = recursive
-        self.proto._cmd_send(cmd_data, 'storage_delete_request')
+        self.proto._rpc_send(cmd_data, 'storage_delete_request')
 
     def _cmd_storage_write(self, path, data):
         cmd_data = storage_pb2.WriteRequest()
         cmd_data.path = path
         cmd_data.file.data = data
-        self.proto._cmd_send(cmd_data, 'storage_write_request')
+        self.proto._rpc_send(cmd_data, 'storage_write_request')
 
     def check_response_status(self, response):
         if response.command_status == flipper_pb2.CommandStatus.ERROR_STORAGE_INVALID_NAME:
@@ -81,7 +81,7 @@ class FlipperAPI():
             files = []
 
             while True:
-                packet = self.proto._cmd_read_answer()
+                packet = self.proto._rpc_read_answer()
                 self.check_response_status(packet)
                 for file in packet.storage_list_response.file:
                     files.append({**{
@@ -111,7 +111,7 @@ class FlipperAPI():
             contents = []
 
             while True:
-                packet = self.proto._cmd_read_answer()
+                packet = self.proto._rpc_read_answer()
                 print(packet)
                 self.check_response_status(packet)
                 contents.extend(packet.storage_read_response.file.data)
@@ -144,8 +144,9 @@ class FlipperAPI():
             self._cmd_storage_write(path, data)
 
     def close(self):
-        with self.mutex:
-            self.proto.cmd_flipper_stop_session()
+        pass
+        # with self.mutex:
+        #     self.proto.cmd_flipper_stop_session()
 
 class InvalidNameError(RuntimeError):
     pass
