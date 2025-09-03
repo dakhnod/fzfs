@@ -28,7 +28,7 @@ def main():
         print(args.mountpoint, ': mountpoint must be an empty folder')
         return
 
-    if args.serial_device is None:
+    if args.serial_device is None and args.ble_address is None:
         args.serial_device = flsrl.discover()
 
     if args.serial_device is None and args.ble_address is None:
@@ -39,7 +39,7 @@ def main():
         print('only one of serial_device/ble_address required')
         return
 
-    if not os.path.exists(args.serial_device):
+    if args.ble_address is None and not os.path.exists(args.serial_device):
         print(args.serial_device,': no such file or directory')
         parser.print_usage()
         return

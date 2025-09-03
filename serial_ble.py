@@ -1,11 +1,7 @@
-from audioop import add
-from concurrent.futures import thread
-from sqlite3 import connect
 import bleak
 import serial
 import asyncio
 import threading
-import time
 
 class BLESerial(serial.Serial):
     def __init__(self, address: str, read_characteristic: str, write_characteristic: str, read_timeout=1):
