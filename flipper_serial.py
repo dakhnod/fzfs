@@ -44,13 +44,11 @@ class FlipperSerial():
 
     def _create_physical_serial(self, file):
         resource = serial.Serial(file, timeout=1)
-        resource.baudrate = 230400
-        resource.flushOutput()
-        resource.flushInput()
         if self._is_cli:
             resource.read_until(b'>: ')
             resource.write(b"start_rpc_session\r")
             resource.read_until(b'\n')
+            
         return resource
 
     def _create_ble_serial(self, address):

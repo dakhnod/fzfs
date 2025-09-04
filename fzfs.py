@@ -22,14 +22,14 @@ def main():
 
     logging.basicConfig(level=logging.DEBUG)
 
-    flsrl = flipper_serial.FlipperSerial()
+    serial_device = flipper_serial.FlipperSerial()
 
     if not os.path.isdir(args.mountpoint) and len(os.listdir(args.mountpoint)) != 0:
         print(args.mountpoint, ': mountpoint must be an empty folder')
         return
 
     if args.serial_device is None and args.ble_address is None:
-        args.serial_device = flsrl.discover()
+        args.serial_device = serial_device.discover()
 
     if args.serial_device is None and args.ble_address is None:
         print('either serial_device or ble_address required')
@@ -45,7 +45,7 @@ def main():
         return
 
     try:
-        serial_device = flsrl.open(serial_device=args.serial_device, ble_address=args.ble_address)
+        serial_device = serial_device.open(serial_device=args.serial_device, ble_address=args.ble_address)
     except flipper_serial.FlipperSerialException:
         print('Failed creating serial device')
         return
@@ -56,7 +56,7 @@ def main():
     print('fuse stopped')
 
     backend.close()
-    flsrl.close()
+    serial_device.close()
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)
