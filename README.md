@@ -24,7 +24,7 @@ Then you should be able to access your flipper files through file browser of the
 
 ## Connect via BLE Serial
 
-First, you need to pair your flipper with your computer. Tihs process varies, but a good starting point is:
+First, you need to pair your flipper with your computer. This process varies, but a good starting point is:
 ```
 bluetoothctl
 agent on
